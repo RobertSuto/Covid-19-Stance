@@ -1,0 +1,248 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[skip=5pt plus1pt, indent=15pt]{parskip}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{geometry}
+\usepackage{appendix}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[export]{adjustbox}[2011/08/13]
+\usepackage{url}
+\usepackage{float}
+\usepackage{indentfirst}
+\usepackage{caption}
+\usepackage{subcaption}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Overleaf Example},
+    pdfpagemode=FullScreen,
+    }
+\usepackage{graphicx}
+
+
+\title{Stance detection for COVID-19}
+\author{ Drobnitchi Daniel, Suto Robert-Lucian \\411}
+\date{June 2023}
+
+\begin{document}
+
+
+\maketitle
+\begin{large}
+
+\section{Introduction}
+
+The COVID-19 pandemic has had a profound impact on the world, affecting everything from daily life to global politics and economics. With so much information and misinformation circulating about the virus, it is more important than ever to understand public opinion and sentiment towards the pandemic. Stance detection, the task of automatically determining an author’s perspective or attitude towards a particular topic, can provide valuable insights into public opinion, helping us understand what the public needs to hear, in order to be better informed.
+
+\section{Data}
+The data set that we used, \href{https://www.kaggle.com/datasets/datatattle/covid-19-nlp-text-classification?select=Corona_NLP_test.csv}{Coronavirus tweets NLP}, is composed of 44955 unique tweets, by the same amount of users, posted during the pandemic. The data set is split in 3798 values for testing and 41157 for training. The CSV is structured in 6 columns:
+\begin{itemize}
+    \item \textbf{Location}, which signifies the location from where the tweets was posted;
+    \item \textbf{TweetAt}, representing the date on which the tweet was posted;
+    \item \textbf{OriginalTweet}, containing the Tweet itself; 
+    \item \textbf{Sentiment}, which is structured in 5 categories (Extremely Negative/Positive, Negative/Positive and Neutral)
+    \item the remaining \textbf{two} consist in data regarding the username of a person, which are all noted as number to respect anonymity.
+\end{itemize}
+
+The scope of the model in this case is to conclude if a tweet is sceptic or not, of the Corona Virus legitimacy. Some examples from the data set are:
+\begin{enumerate}
+    \item Extremely Positive:  Coronavirus fun fact: if you cough at the grocery store, you get the whole aisle to yourself pretty quickly. \#CoronavirusOutbreak \#coronavirus \#COVID2019
+    \item Positive:  Check out what these folks are up to here in So Cal ? I like this idea ?
+La Habra supermarket offers special hours for seniors amid COVID-19 crisis https://t.co/ncTXF8TGyf
+    \item Neutral: ...at this time, our distillery remains in operation, but we will not be offering public tours or hosting functions or events. Our retail store is also closed..
+
+https://t.co/lYZg2kfsm0"
+
+    \item Negative: They should have something where the elderly and the people (who don't stock up a ton of food, essentials) can buy what they need first,  then  the more greedy and panick buyers can get what they need. ?? \#stoppanickbuying \#thinkingofothers \#coronavirus \#COVID19
+
+    \item Extremely Negative: New @CSPI consumerÂ’s guide examines how 20 largest restaurant chains by sales are handling paid sick leave during COVID-19 pandemic. Results not good: 60% didnÂ’t disclose any paid leave policy and only 3 chains offer sick leave at all locations nationwide https://t.co/YPJClnpMi2
+
+\end{enumerate}
+
+It is important to take into account the relative bias that the social media app has regarding COVID, twitter, baning users which spread misinformation about COVID. 
+\newpage
+\section{Exploratory Data Analysis}
+
+The first thing that we looked in the data set for were missing Values. We can observe that besides the Location column, there are no missing values. This is because of the fact that GPS/Location services are optional. Intuitive, this field will not be used for this task, so it's not a seminficiative thing. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{figures/missingdata.png}
+    \caption{Missing Data}
+    \label{fig:enter-label}
+\end{figure}
+
+For the simplicity of the Task, we reduced the number of Sentiment classes from five to three, reducing the Extremely labels, to their simple not-extreme sentiment. The distribution is as follows:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=7.423cm]{figures/sentiments.png}
+    \caption{Percentages of sentimental column, in all Data}
+    \label{fig:enter-label}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{figures/sentiments train test.png}
+    \caption{Sentimental column values, in train \& test}
+    \label{fig:enter-label}
+\end{figure}
+
+We also had a look at the number of characters/words related statistics. We can see that regarding length, the positive \& negative tweets don't really differ that much. However, the Neutral ones seem to have more words/characters comparing to the others.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{figures/words in tweets.png}
+    \includegraphics[width=12cm]{figures/characters in tweets.png}
+    \caption{Amount of words and characters based on sentiments}
+    \label{fig:enter-label}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=15cm]{figures/average words in tweets.png}
+    \caption{Average words in tweets}
+    \label{fig:enter-label}
+\end{figure}
+
+We also had a look at the stopwords. For this, we employed the \textbf{nltk} library. The most common stop words for each category are as follows:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=7.2cm]{figures/stopwords in positive.png}
+     \includegraphics[width=7.2cm]{figures/stopwords in negative.png}
+      \includegraphics[width=7.2cm]{figures/stopwords in neutral.png}
+    \caption{Top 10 most used stopwords across all three sentiments}
+    \label{fig:enter-label}
+\end{figure}
+
+Special characters are also found in the dataset. Their occurrences histograms are as follows:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{figures/special characters positive.png}
+     \includegraphics[width=13cm]{figures/special characters negative.png}
+      \includegraphics[width=13cm]{figures/special characters neutral.png}
+    \caption{Special Characters across sentiments histogram}
+    \label{fig:enter-label}
+\end{figure}
+
+We also thought that it would be interesting to have a look at the most used words, mentions and hashtags (beside stop-words) across all of the tweets and mentions. 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{figures/most common words.png}
+    \includegraphics[width=12cm]{figures/most common mentions.png}
+    \includegraphics[width=12cm]{figures/most common hashtags.png}
+    \caption{Most common words, mentions and hashtags used.}
+    \label{fig:enter-label}
+\end{figure}
+
+The fact that the word "\textbf{coronavirus}" is the most used on is no surprise. However, what is surprising is the fact that the most mentioned account is the one belonging to the former President of the United States, Donald Trump. We assume this outcome comes from the false statements he put out during the pandemic. People criticising him but also, his supporters coming to his defence inflating this number by a lot.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=15cm]{figures/tree of mentions.png}
+    \caption{Tree of mentions}
+    \label{fig:enter-label}
+\end{figure}
+
+
+\section{Pre-processing}
+\begin{itemize}
+    \item We removed unwanted characters, punctuation, and special symbols from the text. This included removing numbers, converting text to lowercase, removing emojis, hashtags and mentions, altogether with links and other special characters.
+    \item We removed common words that did not carry significant meaning, such as articles, pronouns, and conjunctions. These words were removed to reduce noise in the data.
+    \item We split the text into individual tokens, such as words or subwords, using a tokenizer. This step broke the text into meaningful units for further analysis.
+    \item We converted the pre-processed text into numerical features. One-hot encoding represented each token as a binary vector, where each element corresponded to a specific token and was either 1 or 0, indicating its presence or absence.
+    \item We transformed the pre-processed text into numerical features using Term Frequency-Inverse Document Frequency (TF-IDF) encoding. TF-IDF measures the importance of a term in a document relative to a corpus of documents, providing a numerical representation of the text's significance.
+\end{itemize}
+
+\section{Fitting Models}
+
+In the model application stage of our project, we utilize the following algorithms:
+
+\subsection{Multinomial Naive Bayes}
+
+We utilize Multinomial Naive Bayes, a probabilistic classifier, for text classification. With an assumption of feature independence, this algorithm estimates probabilities based on the frequency of occurrence of features, making it suitable for tasks such as document categorization.
+
+The results for this are not ideal, reaching an accuracy of only \textbf{0.72}. We used this as a baseline for our next models.
+The summary of the model is as follows:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=7cm]{figures/matrix naive bayes.png}
+    \includegraphics[width=7cm]{figures/raport naive bayes.png}
+    \caption{Multinomial Naive Bayes confusion matrix and raport}
+    \label{fig:enter-label}
+\end{figure}
+
+We can clearly see that our model gets confused at Neutral Tweets. However, this model succeeds at recognising negative tweets, having a bias for this class. 
+
+\subsection{XGBoost}
+
+We apply XGBoost, a powerful gradient boosting algorithm, for enhanced predictive modeling. XGBoost combines weak predictive models, such as decision trees, to create an ensemble model with strong predictive capabilities.
+
+Although simple to implement, this model gave significantly better results than the Multinomial Naive Bayes model, with an accuracy of \textbf{0.86}:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=7cm]{figures/matrix XGboost.png}
+    \includegraphics[width=7cm]{figures/raport xgboost.png}
+    \caption{XGBoost confusion matrix and raport}
+    \label{fig:enter-label}
+\end{figure}
+
+This model seems to lack the bias towards the negative response, found in the previous model, correctly placing most of the answers.
+
+
+\subsection{BERT}
+We employ BERT (Bidirectional Encoder Representations from Transformers), a state-of-the-art language model, for language understanding tasks. BERT captures contextual relationships and semantic meaning by leveraging a transformer architecture, making it highly effective in natural language processing tasks.
+
+We used a pre-trained model (Bert Base uncased), with the following architecture: 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=15cm]{figures/bert model.png}
+
+    \caption{BERT model architecture}
+    \label{fig:enter-label}
+\end{figure}
+
+
+
+This is the model that gave us the best results, sitting at an accuracy of \textbf{0.9}:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=7cm]{figures/matrix bert.png}
+    \includegraphics[width=7cm]{figures/raport bert.png}
+    \caption{BERT confusion matrix and raport}
+    \label{fig:enter-label}
+\end{figure}
+
+We can see that the number of misplaced positive and negative examples went down by almost a half of what the number was at the XGBoost.
+
+
+\section{Conclusion}
+In a world where opinions are as diverse as the people who hold them, understanding the public stance on pressing issues such as the coronavirus is crucial. Through the power of Natural Language Processing, our project delved into analysing the many tweets that this virus produced, in order to uncover the stance on this global pandemic. Utilizing three different models - XGBoost, Bert, and Multinomial Naive Bayes - we were able to achieve the following accuracy in our analysis. The Bert model emerged as the leader with an accuracy score of 0.9, followed by the XGBoost model with a score of 0.865 and the Multinomial Naive Bayes model with a score of 0.72. Our findings provide valuable insights into the public opinion on coronavirus and pave the way for further research in this field.
+
+\newpage
+
+\section{References}
+
+[1] \url{https://twitter.com/}\\
+
+[2] Stance Detection in COVID-19 Tweets \\(\url{https://aclanthology.org/2021.acl-long.127) (Glandt et al., ACL-IJCNLP 2021})\\
+
+[3] Understanding TF-IDF for Machine Learning (\url{https://www.capitalone.com/tech/machine-learning/understanding-tf-idf/}) (Anirudha Simha, October 6, 2021)\\
+
+[4] "Bert", Huggingface (\url{https://huggingface.co/docs/transformers/model_doc/bert})\\
+
+[5] Hamad, O.; Hamdi, A.; Hamdi, S.; Shaban, K. StEduCov: An Explored and Benchmarked Dataset on Stance Detection in Tweets towards Online Education during COVID-19 Pandemic. Big Data Cogn. Comput. 2022, 6, 88. \url{https://doi.org/10.3390/bdcc6030088} \\
+
+[6] Stance Detection in COVID-19 Tweets\\
+ACL 2021  ·  Kyle Glandt, Sarthak Khanal, Yingjie Li, Doina Caragea, Cornelia Caragea
+\end{large}
+\end{document}

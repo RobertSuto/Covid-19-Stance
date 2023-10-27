@@ -1,0 +1,10 @@
+Suto Robert:
+- prersentaiton
+- documentaiton
+- Code: exploratory data analysis | pre-processing
+
+
+Drobnitchi Daniel:
+- presentation
+- documentation
+- Code: pre-processing | Model implementaiton
